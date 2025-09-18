@@ -1,0 +1,17 @@
+{
+  "description": "Synthetic sample of the Kaggle Titanic dataset for offline development.",
+  "features": {
+    "PassengerId": "Unique identifier for each passenger",
+    "Survived": "Target label indicating survival (1) or not (0)",
+    "Pclass": "Ticket class (1st, 2nd, 3rd)",
+    "Name": "Passenger name",
+    "Sex": "Passenger gender",
+    "Age": "Passenger age in years",
+    "SibSp": "Number of siblings/spouses aboard",
+    "Parch": "Number of parents/children aboard",
+    "Ticket": "Ticket number",
+    "Fare": "Passenger fare",
+    "Cabin": "Cabin identifier",
+    "Embarked": "Port of embarkation"
+  }
+}
