@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.build/
+.venv/
+.env/
+.cache/
+.agent_tmp/
+.agent_logs/
+.envrc
+.DS_Store
+.idea/
+.vscode/
