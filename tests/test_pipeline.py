@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from autokaggler.agent import build_success_result
-from autokaggler.data_manager import DataManager
+
 from autokaggler.pipeline import TitanicPipeline, TitanicPipelineResult
 
 
@@ -27,6 +26,7 @@ def test_pipeline_runs_on_sample_data(tmp_path):
     assert result.data_source == "sample"
 
 
+
 def test_success_result_contains_required_metadata(tmp_path):
     dummy_result = TitanicPipelineResult(
         cv_mean=0.5,
@@ -35,6 +35,7 @@ def test_success_result_contains_required_metadata(tmp_path):
         submission_path=str(tmp_path / "submission.csv"),
         data_source="sample",
         notes=None,
+
     )
     agent_result = build_success_result(
         run_id="test-run",
