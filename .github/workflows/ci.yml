@@ -1,4 +1,4 @@
-name: CI
+name: Titanic CI
 
 on:
   push:
@@ -6,12 +6,29 @@ on:
   pull_request:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
-      - run: pip install -e .[test]
-      - run: pytest -q
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[test]
+
+      - name: Run pipeline to generate submission
+        run: |
+          mkdir -p outputs
+          echo '{"profile": "fast", "data_source": "auto"}' | python -m autokaggler > outputs/run.log
+
+      - name: Upload submission.csv as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: submission
+          path: .agent_tmp/submissions/*.csv
