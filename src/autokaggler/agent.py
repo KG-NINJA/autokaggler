@@ -87,8 +87,14 @@ def resolve_profile(task_input: TaskInput) -> str:
 
     profile = task_input.profile or os.environ.get("PROFILE", DEFAULT_PROFILE)
 
-        logging.warning("Unknown profile '%s'; falling back to default '%s'", profile, DEFAULT_PROFILE)
+    if profile not in ("fast", "boosting", "tree", "linear"):
+        logging.warning(
+            "Unknown profile '%s'; falling back to default '%s'",
+            profile,
+            DEFAULT_PROFILE,
+        )
         profile = DEFAULT_PROFILE
+
     os.environ["PROFILE"] = profile
     return profile
 
@@ -106,6 +112,7 @@ def run_agent(task_input: TaskInput, run_id: str) -> TitanicPipelineResult:
 
     submission_name = task_input.submission_name or f"submission-{run_id}.csv"
 
+    pipeline = TitanicPipeline(profile=profile)
     result = pipeline.run(
         train_df=train_df,
         test_df=test_df,
@@ -134,7 +141,6 @@ def build_success_result(run_id: str, log_path: Path, result: TitanicPipelineRes
         "submission_path": result.submission_path,
         "data_source": result.data_source,
         "notes": result.notes,
-
     }
     return AgentResult(ok=True, meta=meta, result=payload)
 
@@ -185,5 +191,5 @@ def main() -> None:
     print(serialise_result(result))
 
 
-if __name__ == "__main__":  # pragma: no cover - handled via __main__
+if __name__ == "__main__":  # pragma: no cover
     main()
