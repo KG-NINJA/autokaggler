@@ -61,7 +61,7 @@ class DataManager:
         if prefer_source in {"auto", "kaggle"}:
             try:
                 return self._load_kaggle(force_download=force_download)
-            except RuntimeError as exc:
+
                 if prefer_source == "kaggle":
                     logging.error("Kaggle download requested but failed: %s", exc)
                     raise
@@ -70,39 +70,12 @@ class DataManager:
                 )
         return self._load_sample()
 
-    def _load_kaggle(
-        self, force_download: bool = False
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, DataMeta]:
+
         """Download from Kaggle and return the datasets."""
 
         train_path = self.data_dir / "train.csv"
         test_path = self.data_dir / "test.csv"
-        downloaded = False
-        if force_download or not train_path.exists() or not test_path.exists():
-            try:
-                self._download_from_kaggle()
-                downloaded = True
-            except Exception as exc:  # pylint: disable=broad-except
-                if train_path.exists() and test_path.exists():
-                    logging.warning(
-                        "Kaggle download failed (%s); using cached dataset at %s",
-                        exc,
-                        self.data_dir,
-                    )
-                else:
-                    raise RuntimeError("Kaggle dataset unavailable and no cache present") from exc
-        if not train_path.exists() or not test_path.exists():
-            raise RuntimeError("Kaggle dataset not found at expected cache location")
-        train_df = pd.read_csv(train_path)
-        test_df = pd.read_csv(test_path)
-        source = "kaggle" if downloaded else "kaggle_cached"
-        meta = DataMeta(
-            source=source,
-            location=str(self.data_dir),
-            additional={
-                "ref": "https://www.kaggle.com/competitions/titanic",
-                "downloaded": str(downloaded).lower(),
-            },
+
         )
         return train_df, test_df, meta
 

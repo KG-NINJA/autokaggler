@@ -30,7 +30,7 @@ class TaskInput:
     random_seed: int = 42
     submission_name: Optional[str] = None
     notes: Optional[str] = None
-    use_ensemble: Optional[bool] = None
+
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -86,7 +86,7 @@ def resolve_profile(task_input: TaskInput) -> str:
     """Determine which profile to run based on input and environment."""
 
     profile = task_input.profile or os.environ.get("PROFILE", DEFAULT_PROFILE)
-    if profile not in {"fast", "power", "boosting"}:
+
         logging.warning("Unknown profile '%s'; falling back to default '%s'", profile, DEFAULT_PROFILE)
         profile = DEFAULT_PROFILE
     os.environ["PROFILE"] = profile
@@ -103,11 +103,7 @@ def run_agent(task_input: TaskInput, run_id: str) -> TitanicPipelineResult:
     )
 
     profile = resolve_profile(task_input)
-    pipeline = TitanicPipeline(
-        profile=profile,
-        random_seed=task_input.random_seed,
-        enable_ensemble=task_input.use_ensemble,
-    )
+
     submission_name = task_input.submission_name or f"submission-{run_id}.csv"
 
     result = pipeline.run(
@@ -138,7 +134,7 @@ def build_success_result(run_id: str, log_path: Path, result: TitanicPipelineRes
         "submission_path": result.submission_path,
         "data_source": result.data_source,
         "notes": result.notes,
-        "feature_importances": result.feature_importances,
+
     }
     return AgentResult(ok=True, meta=meta, result=payload)
 
