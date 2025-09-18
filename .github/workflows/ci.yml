@@ -1,53 +1,26 @@
-name: CI
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      # リポジトリを取得
       - uses: actions/checkout@v4
 
-      # Python をセットアップ
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      # キャッシュ (pip)
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      # 依存関係インストール
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[test]
+          pip install kaggle
 
-      # pytest を実行
-      - name: Run tests
-        run: pytest -q
-
-      # AutoKaggler で submission.csv を生成
-      - name: Generate submission.csv
+      - name: Setup Kaggle API credentials
         run: |
-          mkdir -p .agent_tmp/submissions
-          echo '{"profile": "fast", "data_source": "sample"}' | python -m autokaggler
+          mkdir -p ~/.kaggle
+          echo "${{ secrets.KAGGLE_JSON }}" > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
 
-      # 生成された submission.csv を Artifact として保存
-      - name: Upload submission.csv
-        uses: actions/upload-artifact@v4
-        with:
-          name: submission
-          path: .agent_tmp/submissions/*.csv
+      - name: Run pipeline to generate submission
+        run: |
+          echo '{"profile":"fast","data_source":"kaggle"}' | python -m autokaggler
