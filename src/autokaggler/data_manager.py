@@ -61,7 +61,7 @@ class DataManager:
         if prefer_source in {"auto", "kaggle"}:
             try:
                 return self._load_kaggle(force_download=force_download)
-
+            except Exception as exc:
                 if prefer_source == "kaggle":
                     logging.error("Kaggle download requested but failed: %s", exc)
                     raise
@@ -70,13 +70,25 @@ class DataManager:
                 )
         return self._load_sample()
 
-
-        """Download from Kaggle and return the datasets."""
+    def _load_kaggle(
+        self, force_download: bool = False
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, DataMeta]:
+        """Download from Kaggle (if needed) and return the datasets."""
 
         train_path = self.data_dir / "train.csv"
         test_path = self.data_dir / "test.csv"
 
+        if force_download or not train_path.exists() or not test_path.exists():
+            self._download_from_kaggle()
+
+        train_df = pd.read_csv(train_path)
+        test_df = pd.read_csv(test_path)
+        meta = DataMeta(
+            source="kaggle",
+            location=str(self.data_dir),
+            additional={},
         )
+        logging.info("Loaded Kaggle dataset from %s", self.data_dir)
         return train_df, test_df, meta
 
     def _download_from_kaggle(self) -> None:
