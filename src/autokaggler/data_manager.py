@@ -37,18 +37,7 @@ class DataManager:
     def prepare_datasets(
         self, prefer_source: str = "auto", force_download: bool = False
     ) -> Tuple[pd.DataFrame, pd.DataFrame, DataMeta]:
-        """Return Titanic train and test dataframes plus metadata.
-
-        Parameters
-        ----------
-        prefer_source:
-            ``"auto"`` will attempt Kaggle download first and fallback to the
-            bundled sample dataset. ``"kaggle"`` forces Kaggle (raising on
-            failure) and ``"sample"`` forces the bundled dataset.
-        force_download:
-            When ``True`` any cached Kaggle download is ignored and files are
-            re-fetched.
-        """
+        """Return Titanic train and test dataframes plus metadata."""
 
         prefer_source = prefer_source or "auto"
         if prefer_source not in {"auto", "kaggle", "sample"}:
@@ -73,22 +62,38 @@ class DataManager:
     def _load_kaggle(
         self, force_download: bool = False
     ) -> Tuple[pd.DataFrame, pd.DataFrame, DataMeta]:
-        """Download from Kaggle (if needed) and return the datasets."""
+        """Download from Kaggle and return the datasets."""
 
         train_path = self.data_dir / "train.csv"
         test_path = self.data_dir / "test.csv"
-
+        downloaded = False
         if force_download or not train_path.exists() or not test_path.exists():
-            self._download_from_kaggle()
+            try:
+                self._download_from_kaggle()
+                downloaded = True
+            except Exception as exc:  # pylint: disable=broad-except
+                if train_path.exists() and test_path.exists():
+                    logging.warning(
+                        "Kaggle download failed (%s); using cached dataset at %s",
+                        exc,
+                        self.data_dir,
+                    )
+                else:
+                    raise RuntimeError("Kaggle dataset unavailable and no cache present") from exc
+        if not train_path.exists() or not test_path.exists():
+            raise RuntimeError("Kaggle dataset not found at expected cache location")
 
         train_df = pd.read_csv(train_path)
         test_df = pd.read_csv(test_path)
+        source = "kaggle" if downloaded else "kaggle_cached"
         meta = DataMeta(
-            source="kaggle",
+            source=source,
             location=str(self.data_dir),
-            additional={},
+            additional={
+                "ref": "https://www.kaggle.com/competitions/titanic",
+                "downloaded": str(downloaded).lower(),
+            },
         )
-        logging.info("Loaded Kaggle dataset from %s", self.data_dir)
         return train_df, test_df, meta
 
     def _download_from_kaggle(self) -> None:
@@ -97,7 +102,7 @@ class DataManager:
         logging.info("Attempting to download Titanic dataset from Kaggle")
         try:
             from kaggle.api.kaggle_api_extended import KaggleApi
-        except ImportError as exc:  # pragma: no cover - handled by dependency management
+        except ImportError as exc:  # pragma: no cover
             raise RuntimeError("Kaggle package is required to download datasets") from exc
 
         api = KaggleApi()
