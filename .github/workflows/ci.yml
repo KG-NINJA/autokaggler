@@ -1,3 +1,11 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -15,12 +23,21 @@ jobs:
           pip install -e .[test]
           pip install kaggle
 
+      - name: Run pytest
+        run: pytest -q
+
       - name: Setup Kaggle API credentials
         run: |
           mkdir -p ~/.kaggle
           echo "${{ secrets.KAGGLE_JSON }}" > ~/.kaggle/kaggle.json
           chmod 600 ~/.kaggle/kaggle.json
 
-      - name: Run pipeline to generate submission
+      - name: Generate Titanic submission
         run: |
           echo '{"profile":"fast","data_source":"kaggle"}' | python -m autokaggler
+
+      - name: Upload submission artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: titanic-submission
+          path: .agent_tmp/submissions/*.csv
